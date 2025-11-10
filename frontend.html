@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex API Tester (ECS/Flask)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+        h1 { text-align: center; color: #333; }
+        h2 { border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        form { margin-bottom: 20px; }
+        input[type="text"], input[type="number"] { width: 95%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .api-config { background: #eee; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        button { background: #007BFF; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button.delete { background: #DC3545; }
+        button.delete:hover { background: #c82333; }
+        #responseArea { margin-top: 20px; background: #222; color: #0f0; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Pokédex API Tester (Versión Acoplada)</h1>
+
+        <div class="api-config">
+            <h2>Configuración de la API</h2>
+            <p>Obtén estos valores de la pestaña "Salidas" (Outputs) de tu stack de CloudFormation.</p>
+            
+            <label for="apiUrl">API Endpoint URL:</label>
+            <input type="text" id="apiUrl" placeholder="Pega la URL de 'APIEndpoint' aquí (ej: https://.../prod)">
+            
+            <label for="apiKey">API Key (Secreta):</label>
+            <input type="text" id="apiKey" placeholder="Pega tu clave (obtenida de API Gateway -> Planes de Uso)">
+        </div>
+
+        
+        <h2>Crear Pokémon (POST /pokemon)</h2>
+        <form id="formCreate">
+            <input type="number" id="createId" placeholder="ID (ej: 25)" required>
+            <input type="text" id="createName" placeholder="Nombre (ej: Pikachu)" required>
+            <input type="text" id="createType" placeholder="Tipo (ej: Eléctrico)" required>
+            <button type="submit">Crear</button>
+        </form>
+
+        <h2>Obtener Pokémon (GET /pokemon/{id})</h2>
+        <form id="formGet">
+            <input type="number" id="getId" placeholder="ID del Pokémon" required>
+            <button type="submit">Obtener</button>
+        </form>
+
+        <h2>Actualizar Pokémon (PUT /pokemon/{id})</h2>
+        <form id="formUpdate">
+            <input type="number" id="updateId" placeholder="ID del Pokémon a actualizar" required>
+            <input type="text" id="updateName" placeholder="Nuevo Nombre (opcional)">
+            <input type="text" id="updateType" placeholder="Nuevo Tipo (opcional)">
+            <button type="submit">Actualizar</button>
+        </form>
+
+        <h2>Obtener Todos (GET /pokemon) y Borrar (DELETE /pokemon/{id})</h2>
+        <form id="formGetAll">
+            <button type="submit">Obtener Todos</button>
+        </form>
+        <form id="formDelete">
+            <input type="number" id="deleteId" placeholder="ID del Pokémon a borrar" required>
+            <button type="submit" class="delete">Borrar</button>
+        </form>
+
+        <h2>Respuesta de la API</h2>
+        <pre id="responseArea">Esperando acción...</pre>
+    </div>
+
+    <script>
+        // --- FUNCIONES HELPER ---
+
+        function showResponse(data, status = 200) {
+            const responseArea = document.getElementById('responseArea');
+            responseArea.style.color = (status >= 400) ? "#f00" : "#0f0";
+            responseArea.textContent = `Estado: ${status}\n\n${JSON.stringify(data, null, 2)}`;
+        }
+
+        function getApiBaseUrl() {
+            const url = document.getElementById('apiUrl').value;
+            if (!url) {
+                alert('Por favor, introduce la URL de la API');
+                return null;
+            }
+            return url.replace(/\/$/, ''); // Elimina la barra final si existe
+        }
+
+        function getHeaders() {
+            const key = document.getElementById('apiKey').value;
+            if (!key) {
+                alert('Por favor, introduce la API Key');
+                return null;
+            }
+            return {
+                'Content-Type': 'application/json',
+                'x-api-key': key // <-- ¡LA CLAVE DE SEGURIDAD!
+            };
+        }
+
+        // --- CREAR (POST) ---
+        document.getElementById('formCreate').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const API_URL = getApiBaseUrl() + '/pokemon';
+            const headers = getHeaders();
+            if (!API_URL || !headers) return;
+
+            const id = document.getElementById('createId').value;
+            const name = document.getElementById('createName').value;
+            const type = document.getElementById('createType').value;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        pokedex_id: parseInt(id),
+                        name: name,
+                        pokemon_type: type
+                    })
+                });
+                const data = await response.json();
+                showResponse(data, response.status);
+            } catch (error) {
+                showResponse({ error: error.message }, 500);
+            }
+        });
+
+        // --- OBTENER (GET) ---
+        document.getElementById('formGet').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('getId').value;
+            const API_URL = `${getApiBaseUrl()}/pokemon/${id}`;
+            const headers = getHeaders();
+            if (!API_URL || !headers) return;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: headers
+                });
+                const data = await response.json();
+                showResponse(data, response.status);
+            } catch (error) {
+                showResponse({ error: error.message }, 500);
+            }
+        });
+
+        // --- OBTENER TODOS (GET ALL) ---
+        document.getElementById('formGetAll').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const API_URL = getApiBaseUrl() + '/pokemon';
+            const headers = getHeaders();
+            if (!API_URL || !headers) return;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: headers
+                });
+                const data = await response.json();
+                showResponse(data, response.status);
+            } catch (error) {
+                showResponse({ error: error.message }, 500);
+            }
+        });
+
+        // --- ACTUALIZAR (PUT) ---
+        document.getElementById('formUpdate').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('updateId').value;
+            const API_URL = `${getApiBaseUrl()}/pokemon/${id}`;
+            const headers = getHeaders();
+            if (!API_URL || !headers) return;
+
+            const name = document.getElementById('updateName').value;
+            const type = document.getElementById('updateType').value;
+            const updateData = {};
+            if (name) updateData.name = name;
+            if (type) updateData.pokemon_type = type;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify(updateData)
+                });
+                const data = await response.json();
+                showResponse(data, response.status);
+            } catch (error) {
+                showResponse({ error: error.message }, 500);
+            }
+        });
+
+        // --- BORRAR (DELETE) ---
+        document.getElementById('formDelete').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            const API_URL = `${getApiBaseUrl()}/pokemon/${id}`;
+            const headers = getHeaders();
+            if (!API_URL || !headers) return;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'DELETE',
+                    headers: headers
+                });
+                
+                if (response.status === 204) {
+                    showResponse({ message: `Pokémon ${id} eliminado.` }, 204);
+                } else {
+                    const data = await response.json();
+                    showResponse(data, response.status);
+                }
+            } catch (error) {
+                showResponse({ error: error.message }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

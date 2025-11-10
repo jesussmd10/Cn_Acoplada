@@ -1,0 +1,7 @@
+# requirements.txt
+flask
+boto3
+pydantic
+python-dotenv
+psycopg2-binary
+gunicorn # Servidor de producción para Flask

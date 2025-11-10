@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Pokedex ECR Repository (Para la API Acoplada)"
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: pokedex-api
+    Description: Pokedex ECR repository name
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref RepositoryName
+      ImageScanningConfiguration:
+        ScanOnPush: false
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Mantener solo las ultimas 2 imagenes",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 2
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+
+Outputs:
+  RepositoryUri:
+    Description: ECR URI (usar para 'docker push')
+    Value: !GetAtt ECRRepository.RepositoryUri
+
+  RepositoryName:
+    Description: Repository Name
+    Value: !Ref RepositoryName
+
+  RepositoryArn:
+    Description: Repository ARN
+    Value: !GetAtt ECRRepository.Arn

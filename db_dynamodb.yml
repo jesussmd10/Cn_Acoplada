@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Tabla DynamoDB para la API de Pokedex (Versión Acoplada)"
+
+Parameters:
+  TableName:
+    Type: String
+    Default: PokemonPokedexTable 
+    Description: Nombre de la tabla DynamoDB para la Pokedex
+
+Resources:
+  PokedexTable: 
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableName
+      AttributeDefinitions:
+        - AttributeName: pokedex_id 
+          AttributeType: N          
+      KeySchema:
+        - AttributeName: pokedex_id 
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  TableName:
+    Description: Nombre de la tabla DynamoDB
+    Value: !Ref PokedexTable 
+
+  TableArn:
+    Description: ARN de la tabla DynamoDB
+    Value: !GetAtt PokedexTable.Arn 
