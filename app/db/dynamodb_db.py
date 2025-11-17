@@ -14,7 +14,6 @@ class DynamoDB(DBInterface):
     """
 
     def __init__(self):
-        # --- NUEVO CÓDIGO DE DEPURACIÓN ---
         print("--- [DEBUG] DynamoDB __init__ ---")
         self.dynamodb = boto3.resource('dynamodb')
         self.table_name = os.environ.get('DYNAMODB_TABLE')
@@ -43,20 +42,18 @@ class DynamoDB(DBInterface):
             return None
 
     def get_all_pokemon(self) -> List[Pokemon]:
-        response = self.table.scan() # Advertencia: Ineficiente para tablas grandes
+        response = self.table.scan()
         items = response.get('Items', [])
-        # Quitamos el 'sort' que tenías, ya que 'position' no existe en Pokémon
         return [Pokemon(**item) for item in items]
 
     def update_pokemon(self, pokedex_id: int, pokemon_data: PokemonUpdate) -> Optional[Pokemon]:
         """
         Esta versión usa update_item para una actualización parcial y eficiente.
         """
-        # Excluye campos nulos para no sobrescribir con 'None'
+        
         update_values = pokemon_data.model_dump(exclude_unset=True)
         
         if not update_values:
-            # No hay nada que actualizar
             return self.get_pokemon(pokedex_id) 
 
         # Construye la expresión de actualización de DynamoDB
@@ -83,7 +80,6 @@ class DynamoDB(DBInterface):
 
     def delete_pokemon(self, pokedex_id: int) -> bool:
         try:
-            # Usamos la misma lógica que tenías, pero con la key correcta
             self.table.delete_item(
                 Key={'pokedex_id': pokedex_id},
                 ConditionExpression="attribute_exists(pokedex_id)"

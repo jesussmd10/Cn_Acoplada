@@ -1,4 +1,4 @@
-# app/main.py (Versión para Docker/ECS usando Flask con CORS manual)
+# (Versión para Docker/ECS usando Flask)
 
 from flask import Flask, jsonify, request, Response
 from pydantic import ValidationError
@@ -7,10 +7,10 @@ from functools import wraps
 from app.db.factory import get_db
 from app.model.pokemon import Pokemon, PokemonUpdate
 
-# 1. Inicializa la aplicación Flask
+# Inicializa la aplicación Flask
 app = Flask(__name__)
 
-# 2. Inicializa la conexión a la base de datos
+# Inicializa la conexión a la base de datos
 try:
     print("--- [DEBUG] main.py: Intentando llamar a get_db() ---")
     db = get_db()
@@ -19,7 +19,7 @@ except Exception as e:
     print(f"--- [ERROR FATAL] main.py: Fallo al inicializar get_db(): {e} ---")
     db = None
 
-# 🔹 Función helper para añadir headers CORS a cada respuesta
+# Función helper para añadir headers CORS a cada respuesta
 def cors_response(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -37,7 +37,7 @@ def cors_response(f):
         return jsonify(data), status, headers
     return decorated_function
 
-# 3. Endpoints con CORS aplicado
+# Endpoints con CORS aplicado
 
 @app.route("/pokemon", methods=["POST", "OPTIONS"])
 @cors_response

@@ -1,4 +1,3 @@
-# app/db/db.py
 from abc import ABC, abstractmethod
 from typing import List, Optional
 # Importamos los nuevos modelos

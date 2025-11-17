@@ -141,7 +141,7 @@ Resources:
 
   ECSService:
     Type: AWS::ECS::Service
-    DependsOn: Listener # <-- CORRECCIÓN 1: Evita el error de 'ROLLBACK'
+    DependsOn: Listener
     Properties:
       Cluster: !Ref ECSCluster
       ServiceName: pokedex-service
@@ -283,7 +283,7 @@ Resources:
         RequestParameters:
           integration.request.path.id: method.request.path.id
 
-  # --- Métodos OPTIONS para CORS (Buena práctica) ---
+  # --- Métodos OPTIONS para CORS ---
   OptionsPokemonMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -386,11 +386,9 @@ Resources:
 Outputs:
   APIEndpoint:
     Description: API Gateway URL (añade /pokemon)
-    # CORRECCIÓN 2: La URL ahora usa !Ref RestAPI para generarse correctamente
     Value: !Sub "https://${RestAPI}.execute-api.${AWS::Region}.amazonaws.com/prod" 
 
   APIKeyId:
     Description: API Key ID
     Value: !Ref APIKey
 
-  # CORRECIÓN 3: Se eliminó el Output 'APIKeyValue' para no exponer la clave secreta.
